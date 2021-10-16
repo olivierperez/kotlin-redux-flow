@@ -61,6 +61,6 @@ fun incrementRandomly(min: Int, max: Int): Flow<MyAction> = flow {
 }
 
 fun debug(message: String) {
-    println(message)
-    //println("[${Thread.currentThread().name}] $message")
+    println("${java.util.Date()} | $message")
+//    println("${java.util.Date()} [${Thread.currentThread().name}] $message")
 }

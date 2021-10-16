@@ -33,13 +33,7 @@ class Store<Effect, Action, State>(
     val state: Flow<State> = effects
         .consumeAsFlow()
         .flatMapMerge { effect -> executor(effect) }
-        .onEach {
-            //debug("DEBUG || on action")
-        }
         .scan(initialState) { state, action -> reducer(state, action) }
-        .onEach {
-            //debug("DEBUG || on state")
-        }
         .catch { throwable ->
             debug("on error")
             throwable.printStackTrace()
@@ -48,7 +42,6 @@ class Store<Effect, Action, State>(
         }
 
     suspend fun send(effect: Effect) {
-        //debug("Sending effect: $effect")
         effects.send(effect)
     }
 }
