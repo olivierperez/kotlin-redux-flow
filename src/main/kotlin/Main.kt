@@ -1,24 +1,30 @@
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 suspend fun main() = coroutineScope {
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     val store = Store<MyEffect, MyAction, MyState>(
-        initialState = MyState(-1),
+        initialState = MyState.empty,
         executor = Executor { effect ->
             when (effect) {
-                MyEffect.Load -> flowOf(MyAction.Init)
-                is MyEffect.RandomIncrement -> flow {
-                    emit(MyAction.Increment(Random.nextInt(effect.min, effect.max)))
-                }
+                MyEffect.Load -> init()
+                is MyEffect.RandomIncrement -> incrementRandomly(effect.min, effect.max)
             }
         },
         reducer = Reducer { state, action ->
             when (action) {
-                MyAction.Init -> MyState(0)
-                is MyAction.Increment -> state.copy(value = state.value + action.count)
+                is MyAction.Set -> action.state
+                is MyAction.Increment -> state.incrementedBy(action.count)
+                MyAction.Tick -> state.ticked()
             }
         }
     )
@@ -31,11 +37,27 @@ suspend fun main() = coroutineScope {
     }
 
     store.send(MyEffect.Load)
-    store.send(MyEffect.RandomIncrement(0, 9))
-    store.send(MyEffect.RandomIncrement(10,99))
-    store.send(MyEffect.RandomIncrement(100, 999))
 
-    delay(2000)
+    delay(100)
+    store.send(MyEffect.RandomIncrement(10, 11))
+    store.send(MyEffect.RandomIncrement(100, 101))
+
+    delay(1500)
+    store.send(MyEffect.RandomIncrement(1000, 1001))
+
+    delay(1000)
+}
+
+fun init(): Flow<MyAction> = flow {
+    emit(MyAction.Set(MyState(0, 0)))
+    while (true) {
+        delay(500)
+        emit(MyAction.Tick)
+    }
+}
+
+fun incrementRandomly(min: Int, max: Int): Flow<MyAction> = flow {
+    emit(MyAction.Increment(Random.nextInt(min, max)))
 }
 
 fun debug(message: String) {

@@ -1,4 +1,5 @@
 sealed interface MyAction {
-    object Init : MyAction
+    class Set(val state: MyState) : MyAction
     class Increment(val count: Int) : MyAction
+    object Tick : MyAction
 }

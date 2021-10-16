@@ -1,5 +1,10 @@
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 
 class Reducer<State, Action>(
     private val reduce: (State, Action) -> State
@@ -27,7 +32,7 @@ class Store<Effect, Action, State>(
 
     val state: Flow<State> = effects
         .consumeAsFlow()
-        .transform { effect -> emitAll(executor(effect)) }
+        .flatMapMerge { effect -> executor(effect) }
         .onEach {
             //debug("DEBUG || on action")
         }
