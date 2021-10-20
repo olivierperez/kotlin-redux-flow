@@ -22,10 +22,14 @@ suspend fun main() = coroutineScope {
         },
         reducer = Reducer { state, action ->
             when (action) {
-                is MyAction.Set -> action.state
+                is MyAction.Set -> MyState(0, value = action.initialValue, 0)
                 is MyAction.Increment -> state.incrementedBy(action.count)
                 MyAction.Tick -> state.ticked()
             }
+        },
+        onError = { state, throwable ->
+            throwable.printStackTrace()
+            state.toError(errorCode = 1_000)
         }
     )
 
@@ -49,7 +53,9 @@ suspend fun main() = coroutineScope {
 }
 
 fun init(): Flow<MyAction> = flow {
-    emit(MyAction.Set(MyState(0, 0)))
+    val initialValue = Random.nextInt(10_000, 50_000)
+    emit(MyAction.Set(initialValue))
+
     while (true) {
         delay(500)
         emit(MyAction.Tick)
